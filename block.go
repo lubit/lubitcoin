@@ -12,20 +12,22 @@ import (
 
 // Block struct
 type Block struct {
-	Timestamp int64
-	Extras    string
-	PrevHash  []byte
-	CurrHash  []byte
+	Timestamp    int64
+	Extras       string
+	PrevHash     []byte
+	CurrHash     []byte
+	Transactions []Transaction // add for TX
 }
 
 // NewBlock return a new block
-func NewBlock(str string, prevHash []byte) *Block {
+func NewBlock(str string, prevHash []byte, txs []Transaction) *Block {
 	hash := sha256.Sum256([]byte(str))
 	block := &Block{
-		Timestamp: time.Now().Unix(),
-		Extras:    str,
-		PrevHash:  prevHash,
-		CurrHash:  hash[:],
+		Timestamp:    time.Now().Unix(),
+		Extras:       str,
+		PrevHash:     prevHash,
+		CurrHash:     hash[:],
+		Transactions: txs,
 	}
 	return block
 }

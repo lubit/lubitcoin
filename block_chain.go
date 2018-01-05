@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/hex"
 	"log"
-	"sync"
 
 	"github.com/boltdb/bolt"
 )
@@ -40,8 +41,11 @@ func NewBlockChain(str string) *BlockChain {
 		}
 		hash = dbk.Get([]byte(BlockChainLast))
 		if nil == hash {
+			//creage genesis transaction
+			tx := NewGenesisTransaction([]byte(GenesisAuthor))
 			//create genesis block
-			block := NewBlock("lubitcoin genesis block", nil)
+			block := NewBlock("lubitcoin genesis block", nil, []Transaction{*tx})
+
 			hash = block.CurrHash
 			dbk.Put(hash, block.Serialize())
 			log.Println("Create Blockchain with genesis block")
@@ -59,9 +63,9 @@ func NewBlockChain(str string) *BlockChain {
 }
 
 // AddBlock bc add a block
-func (bc *BlockChain) AddBlock(str string) {
+func (bc *BlockChain) AddBlock(str string, txs []Transaction) {
 
-	block := NewBlock(str, bc.last)
+	block := NewBlock(str, bc.last, txs)
 	block.Dump()
 
 	bc.db.Update(func(tx *bolt.Tx) error {
@@ -94,36 +98,54 @@ func (bc *BlockChain) ListBlocks() {
 	})
 }
 
-// global variable
-var (
-	luBc   *BlockChain
-	luOnce sync.Once
-)
+// FindUTXO iterate address amount
+func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, error) {
 
-// BlockchainGenesis : create the chain with genesis block
-func BlockchainGenesis() {
-
-	luOnce.Do(func() {
-		luBc = NewBlockChain(BlockchainBucket)
+	balance := 0
+	UTXO := make(map[string]int)  // Unspent Transaction Output
+	STXI := make(map[string]bool) // spent transaction input
+	bc.db.View(func(tx *bolt.Tx) error {
+		dbk := tx.Bucket([]byte(bc.name))
+		iter := bc.last
+		for {
+			enc := dbk.Get(iter)
+			block := DeserializeBlock(enc)
+			txs := block.Transactions
+			for _, tx := range txs {
+				txid := hex.EncodeToString(tx.TXID)
+				if (amount == -1) && (balance >= amount) {
+					break
+				}
+				// check previous inputs
+				if _, ok := STXI[txid]; ok {
+					continue
+				}
+				// TXOUT
+				for _, out := range tx.TXOutputs {
+					// check address
+					if !bytes.Equal(out.Address, addr) {
+						continue
+					}
+					UTXO[txid] = out.Amount
+					balance += out.Amount
+				}
+				// TXINPUT
+				for _, in := range tx.TXInputs {
+					if !bytes.Equal(in.Address, addr) {
+						continue
+					}
+					id := hex.EncodeToString(in.TXID)
+					STXI[id] = true
+				}
+			}
+			// genis block break
+			if block.PrevHash == nil {
+				break
+			}
+			iter = block.PrevHash
+		}
+		return nil
 	})
 
-}
-
-// BlockchainListBlocks : list all the block on the chain
-func BlockchainListBlocks() {
-	if luBc == nil {
-		BlockchainGenesis()
-	}
-	luBc.ListBlocks()
-
-}
-
-// BlockchainAddBlock : add a block at the end of the chain
-func BlockchainAddBlock(info string) {
-	if luBc == nil {
-		BlockchainGenesis()
-	}
-	log.Println("BlockchainAddBlock")
-	luBc.AddBlock(info)
-
+	return UTXO, balance, nil
 }

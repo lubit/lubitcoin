@@ -37,12 +37,12 @@ func printUsage() {
 
 	lubitcoin <address> [xx]
 		lubitcoin address query xxx : query address balance
-		lubitcoin address transfer 'amount_00' from 'addr_xx' to 'addr_yy' : transfer
+		lubitcoin address transfer 'amount_00' from 'address_xx' to 'address_yy' : transfer
 
 	`
 	fmt.Println(usage)
-
 }
+
 func parseFlags() {
 
 	flagSet := flag.NewFlagSet("lubitcoin", flag.ExitOnError)

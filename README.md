@@ -1,10 +1,13 @@
 ## 手撸比特币
 
-    1. 《一步步手撸比特币(1):区块+链》
-    2. 《一步步手撸比特币(2):交易》
-    3. 《一步步手撸比特币(2):挖矿》
-    4. 《一步步手撸比特币(2):钱包》
-    5. 《一步步手撸比特币(2):网络》
+    1. 区块+链
+    2. 交易
+    3. 挖矿
+    4. 钱包
+    5. 网络
+    6. 分叉
+    ...
+
     
 ##### 代码
 [https://github.com/lubit/lubitcoin](https://github.com/lubit/lubitcoin.git)
@@ -15,9 +18,12 @@
 
 
 ## References
-[比特币白皮书](https://bitcoin.org/bitcoin.pdf)
-[比特币源码](https://github.com/bitcoin/bitcoin)
-[比特币wiki](https://en.bitcoin.it/wiki/)
-[比特币钱包](https://blockchain.info/)
 
+[https://bitcoin.org/bitcoin.pdf](https://bitcoin.org/bitcoin.pdf)
+
+[https://github.com/bitcoin/bitcoin](https://github.com/bitcoin/bitcoin)
+
+[https://en.bitcoin.it/wiki/](https://en.bitcoin.it/wiki/)
+
+[https://blockchain.info/](https://blockchain.info/)
 
