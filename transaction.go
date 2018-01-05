@@ -42,6 +42,7 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 		txouts []TXOutput
 	)
 	total := 0
+	//INPUTS
 	for k, v := range utxo {
 		id, _ := hex.DecodeString(k)
 		txin := TXInput{
@@ -52,14 +53,20 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 		txins = append(txins, txin)
 		total += v
 	}
+	//OUTPUTS
+	txout := TXOutput{
+		Amount:  amount,
+		Address: to,
+	}
+	txouts = append(txouts, txout)
 	if total-amount > 0 {
-		txout := TXOutput{
+		txout = TXOutput{
 			Amount:  total - amount,
-			Address: to,
+			Address: from,
 		}
 		txouts = append(txouts, txout)
 	}
-
+	//CONSTRUCT
 	tx := &Transaction{
 		TXInputs:  txins,
 		TXOutputs: txouts,

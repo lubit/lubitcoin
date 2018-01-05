@@ -74,9 +74,10 @@ func (bc *BlockChain) AddBlock(str string, txs []Transaction) {
 		dbk.Put(block.CurrHash, block.Serialize())
 		//update last
 		dbk.Put([]byte(BlockChainLast), block.CurrHash)
-		bc.last = block.CurrHash
 		return nil
 	})
+
+	bc.last = block.CurrHash
 
 }
 
@@ -100,47 +101,51 @@ func (bc *BlockChain) ListBlocks() {
 
 // FindUTXO iterate address amount
 func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, error) {
-
 	balance := 0
 	UTXO := make(map[string]int)  // Unspent Transaction Output
 	STXI := make(map[string]bool) // spent transaction input
 	bc.db.View(func(tx *bolt.Tx) error {
 		dbk := tx.Bucket([]byte(bc.name))
-		iter := bc.last
+		//iter := bc.last
+		iter := dbk.Get([]byte(BlockChainLast))
 		for {
 			enc := dbk.Get(iter)
 			block := DeserializeBlock(enc)
-
 			txs := block.Transactions
 			for _, tx := range txs {
+
 				txid := hex.EncodeToString(tx.TXID)
 				if (amount != -1) && (balance >= amount) {
 					break
 				}
-				// check previous inputs
-				if _, ok := STXI[txid]; ok {
-					continue
-				}
-				// TXOUT
-				for _, out := range tx.TXOutputs {
-					// check address
-					if !bytes.Equal(out.Address, addr) {
-						continue
+				// TXOUT : check previous inputs
+				if _, exist := STXI[txid]; exist {
+					log.Println("STXI exist", STXI, txid)
+				} else {
+					for _, out := range tx.TXOutputs {
+						// check address
+						if !bytes.Equal(out.Address, addr) {
+							continue
+						}
+						UTXO[txid] = out.Amount
+						balance += out.Amount
 					}
-					UTXO[txid] = out.Amount
-					balance += out.Amount
 				}
 				// TXINPUT
 				for _, in := range tx.TXInputs {
-					if !bytes.Equal(in.Address, addr) {
-						continue
-					}
 					id := hex.EncodeToString(in.TXID)
-					STXI[id] = true
+					if false == bytes.Equal(in.Address, addr) {
+						continue
+					} else {
+						id = hex.EncodeToString(in.TXID)
+						STXI[id] = true
+					}
+
 				}
 			}
 			// genis block break
 			if block.PrevHash == nil {
+				log.Println("genesis block arrived")
 				break
 			}
 			iter = block.PrevHash
