@@ -110,10 +110,11 @@ func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, er
 		for {
 			enc := dbk.Get(iter)
 			block := DeserializeBlock(enc)
+
 			txs := block.Transactions
 			for _, tx := range txs {
 				txid := hex.EncodeToString(tx.TXID)
-				if (amount == -1) && (balance >= amount) {
+				if (amount != -1) && (balance >= amount) {
 					break
 				}
 				// check previous inputs

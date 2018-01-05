@@ -84,5 +84,8 @@ func NewGenesisTransaction(addr []byte) *Transaction {
 		TXOutputs: []TXOutput{txout},
 		Timestamp: time.Now(),
 	}
+	b, _ := json.Marshal(tx)
+	hash := sha256.Sum256(b)
+	tx.TXID = hash[:]
 	return tx
 }

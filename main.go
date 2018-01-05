@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 )
 
 /*Cmd Varaiable*/
@@ -93,9 +94,16 @@ func cmdBlockChain(args []string) {
 }
 
 func cmdAddress(args []string) {
-	if len(args) == 0 {
+	if len(args) < 2 {
 		printUsage()
 		os.Exit(0)
+	}
+	switch args[0] {
+	case CmdAddressQuery:
+		AddressQuery(args[1])
+	case CmdAddressTransfer:
+		amount, _ := strconv.Atoi(args[1])
+		AddressTransfer([]byte(args[2]), []byte(args[3]), amount)
 	}
 	log.Println(args)
 }

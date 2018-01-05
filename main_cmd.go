@@ -40,7 +40,7 @@ func BlockchainAddBlock(info string) {
 }
 
 // AddressQuery : return
-func AddressQuery(addr string) {
+func AddressQuery(addr string) int {
 	if luBc == nil {
 		BlockchainGenesis()
 	}
@@ -50,10 +50,10 @@ func AddressQuery(addr string) {
 	}
 
 	for k, v := range txm {
-		log.Printf("TXID [%s] : TXAmount[%d] \n", k, v)
+		log.Printf("TXID [%x] : TXAmount[%d] \n", k, v)
 	}
 	log.Println("Amount:", balance)
-
+	return balance
 }
 
 // AddressTransfer : transfer from xx to yy
