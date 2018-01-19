@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,13 +10,18 @@ import (
 /*Cmd Varaiable*/
 const (
 	CmdBlockchain          = "blockchain"
-	CmdBlockchainCreate    = "create"
-	CmdBlockchainList      = "list"
+	CmdBlockchainCreate    = "-create"
+	CmdBlockchainList      = "-list"
 	CmdBlockchainListBlock = "block"
-	CmdBlockchainAdd       = "add"
-	CmdAddress             = "address"
-	CmdAddressQuery        = "query"
-	CmdAddressTransfer     = "transfer"
+	CmdBlockchainAdd       = "-add"
+	CmdTransaction         = "transaction"
+	CmdTransactionQuery    = "-query"
+	CmdTransactionSend     = "-send"
+	CmdTransactionSendFrom = "-from"
+	CmdTransactionSendTo   = "-to"
+	CmdUTXOSet             = "utxoset"
+	CmdUTXOSetReindex      = "-reindex"
+	CmdUTXOSetQuery        = "-query"
 )
 
 func main() {
@@ -31,37 +35,83 @@ func printUsage() {
 	usage := `	
 	USAGE : lubitcoin <module> [<action>] [action parameter]
 
-	lubitcoin <blockchain> [xxx]
-		lubitcoin blockchain create : create blockchain with genesis block
-		lubitcoin blockchain list block : list blockchain all blocks
-		lubitcoin blockchain add xxxx : add a block
+	 <blockchain> [xxx]
+		 blockchain -create : create blockchain with genesis block
+		 blockchain -list  : list blockchain all blocks
+		 blockchain -add xxxx : add a block
 
-	lubitcoin <address> [xx]
-		lubitcoin address query xxx : query address balance
-		lubitcoin address transfer 'amount_00' from 'address_xx' to 'address_yy' : transfer
+	 <transaction> [xx]
+		 transaction -query xxx : query address balance
+		 transaction -send 'amount_00' -from 'address_xx' -to 'address_yy' : transfer
 
+	 <utxoset>
+		 utxoset -reindex : rebuild utxoset
+		 utxoset -query xxx : query address by utxoset
+		
 	`
 	fmt.Println(usage)
 }
 
 func parseFlags() {
 
-	flagSet := flag.NewFlagSet("lubitcoin", flag.ExitOnError)
-	flagSet.Parse(os.Args)
-	if flagSet.NArg() < 2 {
+	// blockchainCmd := flag.NewFlagSet("blockchain", flag.ExitOnError)
+	// transactionCmd := flag.NewFlagSet("transaction", flag.ExitOnError)
+	// utxosetCmd := flag.NewFlagSet("utxoset", flag.ExitOnError)
+	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(0)
 	}
-	switch flagSet.Arg(1) {
+
+	switch os.Args[1] {
 	case CmdBlockchain:
-		cmdBlockChain(flagSet.Args()[2:])
-	case CmdAddress:
-		cmdAddress(flagSet.Args()[2:])
-	default:
-		cmdBlockChain(flagSet.Args()[2:])
+		cmdBlockChain(os.Args[2:])
+	case CmdTransaction:
+		cmdTransaction(os.Args[2:])
+	case CmdUTXOSet:
+		cmdUTXOSet(os.Args[2:])
 	}
+
+	return
+
 }
 
+//////* Transaction
+
+func cmdTransaction(args []string) {
+
+	if len(args) < 2 {
+		printUsage()
+		os.Exit(0)
+	}
+
+	log.Println(args)
+
+	switch args[0] {
+	case CmdTransactionQuery:
+		AddressQuery(args[1])
+	case CmdTransactionSend:
+		amount, _ := strconv.Atoi(args[1])
+		AddressTransfer([]byte(args[3]), []byte(args[5]), amount)
+	}
+	log.Println(args)
+}
+
+/////  UTXO
+func cmdUTXOSet(args []string) {
+	if len(args) < 2 {
+		printUsage()
+		os.Exit(0)
+	}
+	switch args[0] {
+	case CmdUTXOSetReindex:
+		UTXOReindex()
+	case CmdUTXOSetQuery:
+		UTXOQuery([]byte(args[1]))
+	}
+	return
+}
+
+///// Blockchain
 func cmdBlockChain(args []string) {
 
 	if len(args) == 0 {
@@ -100,9 +150,9 @@ func cmdAddress(args []string) {
 	}
 
 	switch args[0] {
-	case CmdAddressQuery:
+	case CmdTransactionQuery:
 		AddressQuery(args[1])
-	case CmdAddressTransfer:
+	case CmdTransactionSend:
 		amount, _ := strconv.Atoi(args[1])
 		AddressTransfer([]byte(args[3]), []byte(args[5]), amount)
 	}

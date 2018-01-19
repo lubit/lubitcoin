@@ -20,11 +20,11 @@ type Block struct {
 }
 
 // NewBlock return a new block
-func NewBlock(str string, prevHash []byte, txs []Transaction) *Block {
-	hash := sha256.Sum256([]byte(str))
+func NewBlock(extras string, prevHash []byte, txs []Transaction) *Block {
+	hash := sha256.Sum256([]byte(extras))
 	block := &Block{
 		Timestamp:    time.Now().Unix(),
-		Extras:       str,
+		Extras:       extras,
 		PrevHash:     prevHash,
 		CurrHash:     hash[:],
 		Transactions: txs,

@@ -1,16 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"time"
 )
 
 // GenesisRewards 100
 const (
-	GenesisRewards = 100
-	GenesisAuthor  = "luofaxuan"
+	GenesisRewards = 100 // 1 lubit = 1 * 10^6 发
+	GenesisAuthor  = "罗发宣"
 )
 
 // Transaction struct
@@ -25,13 +28,13 @@ type Transaction struct {
 type TXInput struct {
 	TXID    []byte
 	Amount  int
-	Address []byte
+	Address string
 }
 
 // TXOutput struct
 type TXOutput struct {
 	Amount  int
-	Address []byte
+	Address string
 }
 
 // NewTransaction create a new TX
@@ -48,7 +51,7 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 		txin := TXInput{
 			TXID:    id,
 			Amount:  v,
-			Address: from,
+			Address: string(from),
 		}
 		txins = append(txins, txin)
 		total += v
@@ -56,13 +59,13 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 	//OUTPUTS
 	txout := TXOutput{
 		Amount:  amount,
-		Address: to,
+		Address: string(to),
 	}
 	txouts = append(txouts, txout)
 	if total-amount > 0 {
 		txout = TXOutput{
 			Amount:  total - amount,
-			Address: from,
+			Address: string(from),
 		}
 		txouts = append(txouts, txout)
 	}
@@ -84,7 +87,7 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 func NewGenesisTransaction(addr []byte) *Transaction {
 	txout := TXOutput{
 		Amount:  GenesisRewards,
-		Address: addr,
+		Address: string(addr),
 	}
 	tx := &Transaction{
 		TXInputs:  nil,
@@ -95,4 +98,29 @@ func NewGenesisTransaction(addr []byte) *Transaction {
 	hash := sha256.Sum256(b)
 	tx.TXID = hash[:]
 	return tx
+}
+
+// TXOutputs struct
+type TXOutputs struct {
+	TXOS []TXOutput
+}
+
+// Serialize to bytes
+func (o TXOutputs) Serialize() []byte {
+	var buff bytes.Buffer
+	enc := gob.NewEncoder(&buff)
+	if err := enc.Encode(o); err != nil {
+		log.Panic(err)
+	}
+	return buff.Bytes()
+}
+
+// Deserialize to struct
+func DeserializeTXO(enc []byte) *TXOutputs {
+	var txo TXOutputs
+	dec := gob.NewDecoder(bytes.NewReader(enc))
+	if err := dec.Decode(&txo); err != nil {
+		log.Panic(err)
+	}
+	return &txo
 }

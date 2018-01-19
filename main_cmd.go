@@ -14,11 +14,10 @@ var (
 
 // BlockchainGenesis : create the chain with genesis block
 func BlockchainGenesis() {
-
 	luOnce.Do(func() {
 		luBc = NewBlockChain(BlockchainBucket)
+		UTXOSet{luBc}.Reindex()
 	})
-
 }
 
 // BlockchainListBlocks : list all the block on the chain
@@ -44,7 +43,7 @@ func AddressQuery(addr string) int {
 	if luBc == nil {
 		BlockchainGenesis()
 	}
-	txm, balance, err := luBc.FindUTXO([]byte(addr), -1)
+	txm, balance, err := luBc.FindUTXOByAddress([]byte(addr), -1)
 	if err != nil {
 		log.Println(err)
 	}
@@ -56,13 +55,13 @@ func AddressQuery(addr string) int {
 	return balance
 }
 
-// AddressTransfer : transfer from xx to yy
+// AddressTransfer : send from xx to yy
 func AddressTransfer(from, to []byte, amount int) {
 	log.Println(from, to, amount)
 	if luBc == nil {
 		BlockchainGenesis()
 	}
-	txm, balance, err := luBc.FindUTXO([]byte(from), amount)
+	txm, balance, err := luBc.FindUTXOByAddress([]byte(from), amount)
 	if err != nil {
 		log.Println(err)
 	}
@@ -75,4 +74,24 @@ func AddressTransfer(from, to []byte, amount int) {
 	str := fmt.Sprintf("Transfer From [%s] TO [%s]: %d", string(from), string(to), amount)
 	luBc.AddBlock(str, []Transaction{*tx})
 
+}
+
+// UTXOReindex : reindex utxo
+func UTXOReindex() {
+	if luBc == nil {
+		BlockchainGenesis()
+	}
+	u := UTXOSet{luBc}
+	u.Reindex()
+}
+
+// UTXOQuery : utxo query
+func UTXOQuery(addr []byte) int {
+	if luBc == nil {
+		BlockchainGenesis()
+	}
+	u := UTXOSet{luBc}
+	amount := u.GetBalance(addr)
+	log.Println(string(addr), amount)
+	return amount
 }

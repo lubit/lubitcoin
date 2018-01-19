@@ -12,14 +12,15 @@ import (
 const (
 	BlockchainName   = "lubit"
 	BlockchainFile   = "lubit.db"
-	BlockchainBucket = "lubit.bucket"
+	BlockchainBucket = "lubit.bucket" //block
+	BlockchainUTXO   = "lubit.utxo"   //chainstate
 	BlockChainLast   = "l"
 )
 
 // BlockChain struct
 type BlockChain struct {
 	name string
-	last []byte
+	tip  []byte
 	db   *bolt.DB
 }
 
@@ -56,7 +57,7 @@ func NewBlockChain(str string) *BlockChain {
 	// Construct blockchain
 	bc := &BlockChain{
 		name: str,
-		last: hash,
+		tip:  hash,
 		db:   db,
 	}
 	return bc
@@ -65,7 +66,7 @@ func NewBlockChain(str string) *BlockChain {
 // AddBlock bc add a block
 func (bc *BlockChain) AddBlock(str string, txs []Transaction) {
 
-	block := NewBlock(str, bc.last, txs)
+	block := NewBlock(str, bc.tip, txs)
 	block.Dump()
 
 	bc.db.Update(func(tx *bolt.Tx) error {
@@ -77,7 +78,7 @@ func (bc *BlockChain) AddBlock(str string, txs []Transaction) {
 		return nil
 	})
 
-	bc.last = block.CurrHash
+	bc.tip = block.CurrHash
 
 }
 
@@ -86,7 +87,7 @@ func (bc *BlockChain) ListBlocks() {
 
 	bc.db.View(func(tx *bolt.Tx) error {
 		dbk := tx.Bucket([]byte(bc.name))
-		iter := bc.last
+		iter := bc.tip
 		for {
 			enc := dbk.Get(iter)
 			block := DeserializeBlock(enc)
@@ -99,8 +100,8 @@ func (bc *BlockChain) ListBlocks() {
 	})
 }
 
-// FindUTXO iterate address amount
-func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, error) {
+// FindUTXOByAddress iterate address amount
+func (bc *BlockChain) FindUTXOByAddress(addr []byte, amount int) (map[string]int, int, error) {
 	balance := 0
 	UTXO := make(map[string]int)  // Unspent Transaction Output
 	STXI := make(map[string]bool) // spent transaction input
@@ -124,7 +125,7 @@ func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, er
 				} else {
 					for _, out := range tx.TXOutputs {
 						// check address
-						if !bytes.Equal(out.Address, addr) {
+						if !bytes.Equal([]byte(out.Address), addr) {
 							continue
 						}
 						UTXO[txid] = out.Amount
@@ -134,13 +135,12 @@ func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, er
 				// TXINPUT
 				for _, in := range tx.TXInputs {
 					id := hex.EncodeToString(in.TXID)
-					if false == bytes.Equal(in.Address, addr) {
+					if false == bytes.Equal([]byte(in.Address), addr) {
 						continue
 					} else {
 						id = hex.EncodeToString(in.TXID)
 						STXI[id] = true
 					}
-
 				}
 			}
 			// genis block break
@@ -154,4 +154,45 @@ func (bc *BlockChain) FindUTXO(addr []byte, amount int) (map[string]int, int, er
 	})
 
 	return UTXO, balance, nil
+}
+
+// FindUTXO return all the UTXO
+func (bc *BlockChain) FindUTXO() map[string][]TXOutput {
+	UTXO := make(map[string][]TXOutput)
+	STXI := make(map[string][]string)
+	bc.db.View(func(tx *bolt.Tx) error {
+		buck := tx.Bucket([]byte(bc.name))
+		iter := buck.Get([]byte(BlockChainLast))
+		for {
+			block := DeserializeBlock(buck.Get(iter))
+			for _, tx := range block.Transactions {
+				txid := hex.EncodeToString(tx.TXID)
+				// UTXO collect
+				for _, out := range tx.TXOutputs {
+					// check if spent in STXI
+					if STXI[txid] != nil {
+						for _, addr := range STXI[txid] {
+							if addr == out.Address {
+								continue
+							}
+						}
+					}
+					UTXO[txid] = append(UTXO[txid], out)
+				}
+				// STXI collect
+				for _, in := range tx.TXInputs {
+					inid := hex.EncodeToString(in.TXID)
+					STXI[inid] = append(STXI[inid], in.Address)
+				}
+			}
+			//
+			if block.PrevHash == nil {
+				break
+			} else {
+				iter = block.PrevHash
+			}
+		}
+		return nil
+	})
+	return nil
 }
