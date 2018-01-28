@@ -7,24 +7,28 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
+// variable
 const (
-	UTXOFile = "lubit.utxo"
+	UTXOFile = "lubit.db.utxo"
 )
 
 // UTXOSet  owns all the UTXOs
 type UTXOSet struct {
-	lvl *leveldb.DB
-	//BlockChain *BlockChain // For BlockChain.db
+	lvl   *leveldb.DB
+	chain *BlockChain 
 }
 
-func NewUTXOSet() *UTXOSet {
+func NewUTXOSet(bc *BlockChain) *UTXOSet {
 	lvl, _ := leveldb.OpenFile(UTXOFile, nil)
-	set := &UTXOSet{lvl}
+	set := &UTXOSet{
+		lvl:lvl,
+		chain: bc,
+	}
 	return set
 }
 
-func (u UTXOSet) Reindex(bc BlockChain) {
-	UTXOS := bc.FindUTXO()
+func (u UTXOSet) Reindex() {
+	UTXOS := u.chain.FindUTXO()
 	for k, v := range UTXOS {
 		val := TXOutputs{v}
 		u.lvl.Put([]byte(k), val.Serialize(), nil)

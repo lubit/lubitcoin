@@ -10,10 +10,8 @@ import (
 
 //Blockchain Variable
 const (
-	BlockchainName   = "lubit"
-	BlockchainFile   = "lubit.db"
-	BlockchainBucket = "lubit.bucket"
 	BlockChainLast   = "tip"
+	BlockchainFile   = "lubit.db.block"
 )
 
 // BlockChain struct
@@ -23,7 +21,8 @@ type BlockChain struct {
 }
 
 // NewBlockChain return a new block chain
-func NewBlockChain(str string) *BlockChain {
+func NewBlockChain() *BlockChain {
+
 	lvl, err := leveldb.OpenFile(BlockchainFile, nil)
 	if err != nil {
 		log.Panic(err)
@@ -58,6 +57,9 @@ func (chain *BlockChain) AddBlock(block *Block) {
 func (chain *BlockChain) ListBlocks() {
 	iter := chain.tip
 	for {
+		if iter == nil {
+			return
+		}
 		enc, _ := chain.lvl.Get(iter, nil)
 		block := DeserializeBlock(enc)
 		block.Dump()

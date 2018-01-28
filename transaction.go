@@ -39,7 +39,6 @@ type TXOutput struct {
 
 // NewTransaction create a new TX
 func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transaction {
-
 	var (
 		txins  []TXInput
 		txouts []TXOutput
@@ -75,12 +74,10 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 		TXOutputs: txouts,
 		Timestamp: time.Now(),
 	}
-
 	b, _ := json.Marshal(tx)
 	hash := sha256.Sum256(b)
 	tx.TXID = hash[:]
 	return tx
-
 }
 
 // NewGenesisTransaction create genesis transaction
