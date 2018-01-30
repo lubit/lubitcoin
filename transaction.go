@@ -13,7 +13,7 @@ import (
 // GenesisRewards 100
 const (
 	GenesisRewards = 100 // 1 lubit = 1 * 10^6 发
-	GenesisAuthor  = "罗发宣"
+	GenesisAuthor  = "thues"
 )
 
 // Transaction struct

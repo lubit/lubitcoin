@@ -8,16 +8,18 @@ import (
 
 // global variable
 var (
-	globalChain     *BlockChain
-	globalUTXO      *UTXOSet
-	globalChainOnce sync.Once
+	globalChain *BlockChain
+	globalUTXO  *UTXOSet
+	globalOnce  sync.Once
 )
 
 // BlockchainGenesis : create the chain with genesis block
 func BlockchainGenesis() {
-	globalChainOnce.Do(func() {
+	globalOnce.Do(func() {
 		globalChain = NewBlockChain()
 		globalUTXO = NewUTXOSet(globalChain)
+		globalUTXO.Reindex()
+		log.Println("Genesis BlockChain ... ")
 	})
 }
 
@@ -77,6 +79,8 @@ func AddressTransfer(from, to []byte, amount int) {
 	str := fmt.Sprintf("Transfer From [%s] TO [%s]: %d", string(from), string(to), amount)
 	block := NewBlock(str, nil, []Transaction{*tx})
 	globalChain.AddBlock(block)
+	log.Println("blockchain add", str)
+	globalUTXO.Update(block)
 
 }
 

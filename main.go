@@ -69,6 +69,8 @@ func parseFlags() {
 		cmdTransaction(os.Args[2:])
 	case CmdUTXOSet:
 		cmdUTXOSet(os.Args[2:])
+	default:
+		printUsage()
 	}
 
 	return
@@ -90,12 +92,14 @@ func cmdTransaction(args []string) {
 	case CmdTransactionSend:
 		amount, _ := strconv.Atoi(args[1])
 		AddressTransfer([]byte(args[3]), []byte(args[5]), amount)
+	default:
+		printUsage()
 	}
 }
 
 /////  UTXO
 func cmdUTXOSet(args []string) {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		printUsage()
 		os.Exit(0)
 	}
@@ -104,6 +108,8 @@ func cmdUTXOSet(args []string) {
 		UTXOReindex()
 	case CmdUTXOSetQuery:
 		UTXOQuery([]byte(args[1]))
+	default:
+		printUsage()
 	}
 	return
 }

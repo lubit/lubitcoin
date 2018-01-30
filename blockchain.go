@@ -32,6 +32,7 @@ func NewBlockChain() *BlockChain {
 		// empty chain
 		if leveldb.ErrNotFound == err {
 			block := NewGenesisBlock()
+			tip = block.CurrHash
 			lvl.Put(block.CurrHash, block.Serialize(), nil)
 			lvl.Put([]byte(BlockChainLast), block.CurrHash, nil)
 		} else {
@@ -42,6 +43,7 @@ func NewBlockChain() *BlockChain {
 		tip: tip,
 		lvl: lvl,
 	}
+
 	return chain
 }
 
@@ -85,6 +87,7 @@ func (chain *BlockChain) FindUTXOByAddress(addr []byte, amount int) (map[string]
 
 	iter := chain.tip
 	for {
+
 		enc, _ := chain.lvl.Get([]byte(iter), nil)
 		block := DeserializeBlock(enc)
 		txs := block.Transactions
@@ -134,20 +137,28 @@ func (chain *BlockChain) FindUTXO() map[string][]TXOutput {
 
 	iter := chain.tip
 	for {
-		enc, _ := chain.lvl.Get([]byte(iter), nil)
+		enc, err := chain.lvl.Get([]byte(iter), nil)
+		if err != nil {
+			log.Panic(err)
+		}
 		block := DeserializeBlock(enc)
 		for _, tx := range block.Transactions {
 			txid := hex.EncodeToString(tx.TXID)
 			// UTXO collect
 			for _, out := range tx.TXOutputs {
+
+				exist := false
 				if STXI[txid] != nil {
 					for _, addr := range STXI[txid] {
 						if addr == out.Address {
-							continue
+							exist = true
 						}
 					}
 				}
-				UTXO[txid] = append(UTXO[txid], out)
+				if !exist {
+					UTXO[txid] = append(UTXO[txid], out)
+					log.Printf("UTXO: %+v \n", UTXO)
+				}
 			}
 			// STXI
 			for _, in := range tx.TXInputs {
@@ -161,5 +172,6 @@ func (chain *BlockChain) FindUTXO() map[string][]TXOutput {
 			iter = block.PrevHash
 		}
 	}
+
 	return UTXO
 }
