@@ -12,6 +12,7 @@ import (
 
 // Block struct
 type Block struct {
+	Nonce        int64
 	Timestamp    int64
 	Extras       string
 	PrevHash     []byte
@@ -21,14 +22,18 @@ type Block struct {
 
 // NewBlock return a new block
 func NewBlock(extras string, prevHash []byte, txs []Transaction) *Block {
-	hash := sha256.Sum256([]byte(extras))
+	//hash := sha256.Sum256([]byte(extras))
 	block := &Block{
 		Timestamp:    time.Now().Unix(),
 		Extras:       extras,
 		PrevHash:     prevHash,
-		CurrHash:     hash[:],
 		Transactions: txs,
 	}
+	pow := ProofOfWork{block}
+	nonce, hash := pow.Mine()
+	block.CurrHash = hash
+	block.Nonce = nonce
+	fmt.Printf("hash: %x \n", hash)
 	return block
 }
 
@@ -56,4 +61,11 @@ func (b *Block) Serialize() []byte {
 func (b *Block) Dump() {
 	dump, _ := json.MarshalIndent(b, "", "  ")
 	fmt.Println(string(dump))
+}
+
+//HashTransaction
+func (b *Block) HashTransaction() []byte {
+	btx, _ := json.Marshal(b.Transactions)
+	hash := sha256.Sum256(btx)
+	return hash[:]
 }
