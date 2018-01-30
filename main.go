@@ -83,9 +83,7 @@ func cmdTransaction(args []string) {
 		printUsage()
 		os.Exit(0)
 	}
-
 	log.Println(args)
-
 	switch args[0] {
 	case CmdTransactionQuery:
 		AddressQuery(args[1])
@@ -93,7 +91,6 @@ func cmdTransaction(args []string) {
 		amount, _ := strconv.Atoi(args[1])
 		AddressTransfer([]byte(args[3]), []byte(args[5]), amount)
 	}
-	log.Println(args)
 }
 
 /////  UTXO

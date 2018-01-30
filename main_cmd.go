@@ -9,7 +9,7 @@ import (
 // global variable
 var (
 	globalChain     *BlockChain
-	globalUTXO 		*UTXOSet
+	globalUTXO      *UTXOSet
 	globalChainOnce sync.Once
 )
 
@@ -38,7 +38,7 @@ func BlockchainAddBlock(info string) {
 	log.Println("BlockchainAddBlock")
 	b := NewBlock(info, nil, nil)
 	globalChain.AddBlock(b)
-
+	globalUTXO.Update(b)
 }
 
 // AddressQuery : return
@@ -93,7 +93,7 @@ func UTXOQuery(addr []byte) int {
 	if globalUTXO == nil {
 		BlockchainGenesis()
 	}
-	amount :=globalUTXO.GetBalance(addr)
+	amount := globalUTXO.GetBalance(addr)
 	log.Println(string(addr), amount)
 	return amount
 }

@@ -10,8 +10,8 @@ import (
 
 //Blockchain Variable
 const (
-	BlockChainLast   = "tip"
-	BlockchainFile   = "lubit.db.block"
+	BlockChainLast = "tip"
+	BlockchainFile = "lubit.db.block"
 )
 
 // BlockChain struct
@@ -31,7 +31,7 @@ func NewBlockChain() *BlockChain {
 	if err != nil {
 		// empty chain
 		if leveldb.ErrNotFound == err {
-			block := NewBlock("lubitcoin genesis block", nil, nil)
+			block := NewGenesisBlock()
 			lvl.Put(block.CurrHash, block.Serialize(), nil)
 			lvl.Put([]byte(BlockChainLast), block.CurrHash, nil)
 		} else {
@@ -43,6 +43,13 @@ func NewBlockChain() *BlockChain {
 		lvl: lvl,
 	}
 	return chain
+}
+
+// NewGenesisBlock for blockchain
+func NewGenesisBlock() *Block {
+	tx := NewGenesisTransaction()
+	block := NewBlock("lubitcoin genesis block", nil, []Transaction{*tx})
+	return block
 }
 
 // AddBlock chain add new block
@@ -71,14 +78,14 @@ func (chain *BlockChain) ListBlocks() {
 }
 
 // FindUTXOByAddress iterate address amount
-func (bc *BlockChain) FindUTXOByAddress(addr []byte, amount int) (map[string]int, int, error) {
+func (chain *BlockChain) FindUTXOByAddress(addr []byte, amount int) (map[string]int, int, error) {
 	balance := 0
 	UTXO := make(map[string]int)  // Unspent Transaction Output
 	STXI := make(map[string]bool) // spent transaction input
 
-	iter := bc.tip
+	iter := chain.tip
 	for {
-		enc, _ := bc.lvl.Get([]byte(iter), nil)
+		enc, _ := chain.lvl.Get([]byte(iter), nil)
 		block := DeserializeBlock(enc)
 		txs := block.Transactions
 		for _, tx := range txs {
@@ -121,13 +128,13 @@ func (bc *BlockChain) FindUTXOByAddress(addr []byte, amount int) (map[string]int
 }
 
 // FindUTXO return all the UTXO
-func (bc *BlockChain) FindUTXO() map[string][]TXOutput {
+func (chain *BlockChain) FindUTXO() map[string][]TXOutput {
 	UTXO := make(map[string][]TXOutput)
 	STXI := make(map[string][]string)
 
-	iter := bc.tip
+	iter := chain.tip
 	for {
-		enc, _ := bc.lvl.Get([]byte(iter), nil)
+		enc, _ := chain.lvl.Get([]byte(iter), nil)
 		block := DeserializeBlock(enc)
 		for _, tx := range block.Transactions {
 			txid := hex.EncodeToString(tx.TXID)

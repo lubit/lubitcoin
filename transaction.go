@@ -81,10 +81,10 @@ func NewTransaction(from, to []byte, amount int, utxo map[string]int) *Transacti
 }
 
 // NewGenesisTransaction create genesis transaction
-func NewGenesisTransaction(addr []byte) *Transaction {
+func NewGenesisTransaction() *Transaction {
 	txout := TXOutput{
 		Amount:  GenesisRewards,
-		Address: string(addr),
+		Address: GenesisAuthor,
 	}
 	tx := &Transaction{
 		TXInputs:  nil,
