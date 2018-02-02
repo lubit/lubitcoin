@@ -8,9 +8,10 @@ import (
 
 // global variable
 var (
-	globalChain *BlockChain
-	globalUTXO  *UTXOSet
-	globalOnce  sync.Once
+	globalChain   *BlockChain
+	globalUTXO    *UTXOSet
+	globalOnce    sync.Once
+	globalVersion = byte(0x00)
 )
 
 // BlockchainGenesis : create the chain with genesis block

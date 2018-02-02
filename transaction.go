@@ -26,15 +26,18 @@ type Transaction struct {
 
 // TXInput struct
 type TXInput struct {
-	TXID    []byte
-	Amount  int
-	Address string
+	TXID      []byte
+	Amount    int
+	Address   string
+	Signature []byte
+	PubKey    []byte
 }
 
 // TXOutput struct
 type TXOutput struct {
-	Amount  int
-	Address string
+	Amount       int
+	Address      string
+	ScriptPubKey []byte
 }
 
 // NewTransaction create a new TX

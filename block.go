@@ -69,3 +69,4 @@ func (b *Block) HashTransaction() []byte {
 	hash := sha256.Sum256(btx)
 	return hash[:]
 }
+

@@ -175,3 +175,7 @@ func (chain *BlockChain) FindUTXO() map[string][]TXOutput {
 
 	return UTXO
 }
+
+func (chain *BlockChain) GenerateUTXO() {
+
+}

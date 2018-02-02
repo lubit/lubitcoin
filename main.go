@@ -24,7 +24,7 @@ const (
 	CmdUTXOSetQuery        = "-query"
 )
 
-func main() {
+func main11() {
 
 	parseFlags()
 	return
