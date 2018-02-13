@@ -96,3 +96,29 @@ func (u UTXOSet) GetBalance(addr []byte) int {
 	}
 	return amount
 }
+
+// FindUTXOByAddress get UTXO by address
+func (u UTXOSet) FindUTXO(addr []byte, amount int) (int, map[string][]TXOutput) {
+	var acc int
+	utxo := make(map[string][]TXOutput)
+	iter := u.lvl.NewIterator(nil, nil)
+	defer iter.Release()
+	for iter.Next() {
+		txid := hex.EncodeToString(iter.Key())
+		tx := DeserializeTXO(iter.Value())
+		var txos []TXOutput
+		for _, txo := range tx.TXOS {
+			if bytes.EqualFold(addr, txo.ScriptPubKey) {
+				acc += txo.Amount
+				txos = append(txos, txo)
+				if acc > amount {
+					return acc, utxo
+				}
+			}
+		}
+		if len(txos) > 1 {
+			utxo[txid] = txos
+		}
+	}
+	return acc, utxo
+}

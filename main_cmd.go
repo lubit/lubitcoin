@@ -102,3 +102,30 @@ func UTXOQuery(addr []byte) int {
 	log.Println(string(addr), amount)
 	return amount
 }
+
+// Send : new tx with ecdsa addr
+func Send(from, to string, amount int) {
+
+	// wallet & blockchain setup
+	w := NewWallet()
+	kp := w.GetKeyPair(from)
+	if kp == nil {
+		log.Printf("can not get %s's KeyPair \n", from)
+	}
+	pubhash := HashPublicKey(kp.PublicKey)
+	if globalUTXO == nil {
+		BlockchainGenesis()
+	}
+	// utxo setup
+	acc, utxo := globalUTXO.FindUTXO(pubhash, amount)
+	if acc < amount {
+		log.Printf("%s' not enough coin \n", from)
+	}
+	// to sign
+	tx := NewSignedTx(kp, to, amount, acc-amount, utxo)
+
+	// mine && add
+	b := NewBlock("", nil, []Transaction{*tx})
+	globalChain.AddBlock(b)
+	globalUTXO.Update(b)
+}
